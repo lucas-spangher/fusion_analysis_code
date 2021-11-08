@@ -14,11 +14,12 @@
 
 
 
-simulatePlants = function(fleet0, 
+simulatePlants = function(
+    fleet0, # initial fleet (currentGen)
     START_YEAR=2014, 
     END_YEAR=2050,
     percent_fusion=0, # k, what the maximum percent fusion allowed is
-    addCapDiffProp1, # a matrix containing the differences of proportion of capacity growth per plant per year; see dataprep.r for its creation 
+    addCapDiffProp, # a matrix containing the differences of proportion of capacity growth per plant per year; see dataprep.r for its creation 
     totalEnergy, # a data.frame of energy per year from 2011-2040 from AEO. See dataprep.r for its creation 
     totalCapacity, # a data.frame of capacity per year from 2011-2040 from AEO. See dataprep.r for its creation 
     toReplace="all", # a char vector which energy technologies fusion will replace 
@@ -95,42 +96,44 @@ source("utils.r")
         newCap = data.frame(year=newYears, capacity=predict(capMod, data.frame(year=newYears)))
         totalCapacity=rbind(totalCapacity,newCap)
 
-        # addCapDiffProp1
-        newACDP=addCapDiffProp1["2040",]
+        # addCapDiffProp
+        newACDP=addCapDiffProp["2040",]
         for (i in c(2041:END_YEAR)){
-            newACDP[as.character(i),] = colMeans(addCapDiffProp1[c("2038","2039","2040"),]) 
+            newACDP[as.character(i),] = colMeans(addCapDiffProp[c("2038","2039","2040"),]) 
         }
-        addCapDiffProp1=rbind(addCapDiffProp1,newACDP)
-        addWeightedCF = addCapDiffProp1
+        addCapDiffProp=rbind(addCapDiffProp, newACDP)
+        addCapDiffProp = addCapDiffProp[rownames(addCapDiffProp)%in%c(2014:END_YEAR), ]
+        addWeightedCF = addCapDiffProp
 
-        #### 2. Set up the fusion variable and adding it into the addCapDiffProp1
+        #### 2. Set up the fusion variable and adding it into the addCapDiffProp
         # --------------------------------
         #  
         # setting up the s-curve fusion growth 
         afterYearInd = afterYear-START_YEAR
-        percent_fusion = s_curve(T_ADOPT=T_ADOPT, k= percent_fusion, t=(c(1:nrow(addCapDiffProp1))-(afterYearInd))) #rnorm(nrow(addCapDiffProp1),percent_fusion,.01)
-        names(percent_fusion) = row.names(addCapDiffProp1)
-        percent_fusion[is.na(percent_fusion)]=percent_fusion[1]
-        percent_fusion[percent_fusion<0]=percent_fusion[1]
-        percent_fusion=c(rep(0, afterYearInd-1), percent_fusion[(afterYearInd):nrow(addCapDiffProp1)])
+        percent_fusion = s_curve(T_ADOPT=T_ADOPT, k= percent_fusion, t=(c(1:(nrow(addCapDiffProp))-(afterYearInd)))) #rnorm(nrow(addCapDiffProp),percent_fusion,.01)
 
-        # adding in fusion to addCapDiffProp1 by taking away from the categories that it is supposed to replace 
+        percent_fusion[is.na(percent_fusion)] = percent_fusion[1]
+        percent_fusion[percent_fusion<0] = percent_fusion[1]
+        percent_fusion = c(rep(0, afterYearInd-1), percent_fusion[(afterYearInd):nrow(addCapDiffProp)])
+        names(percent_fusion) = row.names(addCapDiffProp)
+
+        # adding in fusion to addCapDiffProp by taking away from the categories that it is supposed to replace 
         if (sum(c("All","all")%in%toReplace)>0){    
-            addCapDiffProp1=addCapDiffProp1*(1-percent_fusion)
+            addCapDiffProp=addCapDiffProp*(1-percent_fusion)
         } else { 
-            tempInds = names(addCapDiffProp1)%in%toReplace
+            tempInds = names(addCapDiffProp)%in%toReplace
             if (length(toReplace)==1){ 
-                tempSum= addCapDiffProp1[,tempInds]
+                tempSum= addCapDiffProp[,tempInds]
             } else {
-                tempSum= rowSums(addCapDiffProp1[,tempInds])
+                tempSum = rowSums(addCapDiffProp[,tempInds])
             }
             percent_fusion[tempSum<percent_fusion]=tempSum[tempSum<percent_fusion]
             tempMultiple = 1-percent_fusion/tempSum
-            addCapDiffProp1[names(tempMultiple),tempInds] = addCapDiffProp1[names(tempMultiple),tempInds]*tempMultiple
+            addCapDiffProp[names(tempMultiple),tempInds] = addCapDiffProp[names(tempMultiple),tempInds]*tempMultiple
         }
 
-        addCapDiffProp1$NuclearFusion=percent_fusion
-        addCapDiffProp1$TotalTest=NULL # this is to test that it all rows add to 1 
+        addCapDiffProp$NuclearFusion=percent_fusion
+        addCapDiffProp$TotalTest=NULL # this is to test that it all rows add to 1 
 
         addWeightedCF$TotalTest=NULL
 
@@ -144,7 +147,7 @@ source("utils.r")
         yearlyWeightedCF=as.matrix(addWeightedCF)%*%t(t(CFs))
 
         # first output generation 
-        newDF$demandGrowth = pmax(0, c(NA, diff(totalCapacity$capacity)))
+        newDF$demandGrowth = pmax(0, c(0, diff(totalCapacity$capacity)))
 
         # fleet0 is the initial fleet but is later updated in the for-loop      
         fleet_t = fleet0
@@ -223,7 +226,7 @@ source("utils.r")
 
             # d. Generate new plants based to meet the dearth proportional to AEO's additions 
 
-            dearth_types = dearth_t_cap*addCapDiffProp1[as.character(newDF$years[i]),] # TODO          
+            dearth_types = dearth_t_cap*addCapDiffProp[as.character(newDF$years[i]),] # TODO          
             num_plants_types = round(dearth_types/typeChars[names(dearth_types),"AvgCapacityMW"])
             num_plants_types[is.na(num_plants_types)|num_plants_types<0]=0
             

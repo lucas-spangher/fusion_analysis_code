@@ -12,7 +12,7 @@ require(maps)
 require(ggplot2)
 
 # change this directory as needed 
-setwd("//doe/dfsfr/HOME_FORS3/Lucas.Spangher/My Documents/Projects/PowerPlants_Scott_Ryan")
+setwd("/Users/lucas.spangher/Documents/ARPA-E Files/PowerPlantModel")
 
 ### 1. Assemble and tidy a data frame of important characteristics for each type of plant 
 # -------------------
