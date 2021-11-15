@@ -10,10 +10,6 @@
 #       function call. See simulation.r for use cases of this function 
 
 
-
-
-
-
 simulatePlants = function(
     fleet0, # initial fleet (currentGen)
     START_YEAR=2014, 
