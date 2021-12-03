@@ -44,7 +44,7 @@ percent_99_2030 = simulatePlants(currentGen, 2014, 2100, percent_fusion=.999, to
 
 ### 2. Slow and steady (start early and have low penetration) or procrastinator (start late with high penetration)? 
 
-percent_10_2025 = simulatePlants(currentGen, 2014, 2030, percent_fusion=.1, toReplace=c("all"), afterYear=2025, addCapDiffProp, totalEnergy, totalCapacity)
+percent_10_2025 = simulatePlants(currentGen, 2014, 2050, percent_fusion=.1, toReplace=c("all"), afterYear=2025, addCapDiffProp, totalEnergy, totalCapacity)
 percent_15_2025 = simulatePlants(currentGen, 2014, 2100, percent_fusion=.15, toReplace=c("all"), afterYear=2025, addCapDiffProp, totalEnergy, totalCapacity)
 percent_20_2025 = simulatePlants(currentGen, 2014, 2100, percent_fusion=.2, toReplace=c("all"), afterYear=2025, addCapDiffProp, totalEnergy, totalCapacity)
 percent_25_2025 = simulatePlants(currentGen, 2014, 2100, percent_fusion=.25, toReplace=c("all"), afterYear=2025, addCapDiffProp, totalEnergy, totalCapacity)
